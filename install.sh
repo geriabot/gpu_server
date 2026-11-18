@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install Ollama OLLAMA_VERSION (common.sh) in OLLAMA_DIR, in the user's home, without sudo, and
-# put it in the PATH. Every instance uses this program: the running ones are stopped first (by
-# their PIDs) and must be started again. Another version may answer differently: the experiments
-# of each system name the version they were run with.
+# Install Ollama OLLAMA_VERSION (common.sh) in OLLAMA_DIR, in the user's home, without sudo, put it
+# in the PATH, and link the command gpu-server in ~/.local/bin. Every instance uses this program:
+# the running ones are stopped first (by their PIDs) and must be started again. Another version may
+# answer differently: the experiments of each system name the version they were run with.
 #   bash gpu_server/install.sh
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
@@ -45,4 +45,10 @@ esac
 rm -f "$tmp"
 "$OLLAMA" --version || true
 grep -q "$OLLAMA_DIR/bin" "$HOME/.bashrc" || echo "export PATH=$OLLAMA_DIR/bin:\$PATH" >> "$HOME/.bashrc"
+# The command gpu-server, in ~/.local/bin (in the PATH of Ubuntu once the folder exists)
+mkdir -p "$HOME/.local/bin"
+if [ -e "$HOME/.local/bin/gpu-server" ] && [ "$(readlink -f "$HOME/.local/bin/gpu-server")" != "$GPU_SERVER_DIR/gpu-server" ]; then
+  mv "$HOME/.local/bin/gpu-server" "$HOME/.local/bin/gpu-server.old" && echo "Your earlier gpu-server kept as ~/.local/bin/gpu-server.old"
+fi
+ln -sfn "$GPU_SERVER_DIR/gpu-server" "$HOME/.local/bin/gpu-server"
 echo "== Done. Next: bash $(dirname "$0")/start.sh <instance>, then bash $(dirname "$0")/pull_models.sh <instance>"

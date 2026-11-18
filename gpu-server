@@ -1,0 +1,44 @@
+#!/bin/bash
+# Copyright 2026 Rodrigo Pérez-Rodríguez
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# One command for the scripts of gpu_server (install.sh links it as ~/.local/bin/gpu-server):
+#   gpu-server start <instance>      start the Ollama of the instance
+#   gpu-server stop <instance>       stop it (by its PID; the others are not touched)
+#   gpu-server restart <instance>    stop and start again (e.g. after changing its .env)
+#   gpu-server status [instance]     the GPU and every instance (or the one given)
+#   gpu-server unload <instance>     its models out of the GPU, Ollama still running
+#   gpu-server pull <instance> [model ...]   download its models
+#   gpu-server instances             the instances there are
+#   gpu-server update                git pull of gpu_server
+#   gpu-server log <instance>        follow the log of its Ollama
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+source "$DIR/common.sh"
+usage() {
+  sed -n '/^# One command/,/^DIR=/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'
+  echo "Instances: $(instances | tr '\n' ' ')"
+}
+cmd=${1:-}; shift || true
+need_instance() { [ -n "${1:-}" ] || { echo "gpu-server $cmd needs an instance: $(instances | tr '\n' ' ')" >&2; exit 2; }; }
+case "$cmd" in
+  start|stop|unload) need_instance "${1:-}"; exec bash "$DIR/$cmd.sh" "$1" ;;
+  restart) need_instance "${1:-}"; bash "$DIR/stop.sh" "$1" && exec bash "$DIR/start.sh" "$1" ;;
+  status) exec bash "$DIR/status.sh" "$@" ;;
+  pull) need_instance "${1:-}"; exec bash "$DIR/pull_models.sh" "$@" ;;
+  instances) instances ;;
+  update) git -C "$DIR" pull --ff-only ;;
+  log) need_instance "${1:-}"; load_instance "$1"; exec tail -f "$LOG_FILE" ;;
+  ""|-h|--help|help) usage ;;
+  *) echo "Unknown command: $cmd" >&2; usage >&2; exit 2 ;;
+esac
