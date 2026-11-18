@@ -38,12 +38,14 @@ git clone https://github.com/geriabot/gpu_server.git ~/gpu_server
 bash ~/gpu_server/install.sh
 ```
 
-This installs Ollama in `~/ollama`, shared by every instance, at the version in `common.sh`.
+This installs Ollama in `~/ollama`, shared by every instance, at the version in `common.sh`, and
+the command `gpu-server` in `~/.local/bin` (open a new terminal to have it in the `PATH`). Every
+step below can also be run as `bash ~/gpu_server/<script>.sh`.
 
 **2. Start your instance, on the server:**
 
 ```sh
-bash ~/gpu_server/start.sh <instance>
+gpu-server start <instance>
 ```
 
 It prints `starting on port ...` and then the state of the instance. Run it again after every
@@ -52,13 +54,13 @@ restart of the server: nothing starts by itself.
 **3. Download its models, once, on the server:**
 
 ```sh
-bash ~/gpu_server/pull_models.sh <instance>
+gpu-server pull <instance>
 ```
 
 **4. Check it, on the server:**
 
 ```sh
-bash ~/gpu_server/status.sh
+gpu-server status
 ```
 
 It shows the GPU and who uses it, and, for each instance, whether it runs, its models on disk,
@@ -79,11 +81,15 @@ already holds.
 **6. When you are done, on the server:**
 
 ```sh
-bash ~/gpu_server/unload.sh <instance>     # free the GPU, keep Ollama running
-bash ~/gpu_server/stop.sh <instance>       # stop Ollama; the models stay on disk
+gpu-server unload <instance>     # free the GPU, keep Ollama running
+gpu-server stop <instance>       # stop Ollama; the models stay on disk
 ```
 
 ## The scripts
+
+`gpu-server <command>` runs them: `start`, `stop`, `restart`, `unload`, `pull` and `log` take an
+instance; `status` takes one or none; `instances` lists them; `update` pulls this repository;
+`gpu-server help` shows all.
 
 | Script | What it does |
 |---|---|
@@ -135,7 +141,7 @@ run at the same time.
 ## Updating
 
 ```sh
-cd ~/gpu_server && git pull
+gpu-server update
 ```
 
 The running instances keep running; a change of their `.env` takes effect at their next
